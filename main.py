@@ -5,11 +5,17 @@ import random
 red, black = colored('X', 'red', attrs=['bold']), colored('O', attrs=['bold'])  # u'\u2B24'
 balls = [colored(u'\u2B24', 'red'), colored(u'\u2B24')]
 player_1, player_2 = 'red', 'black'
-
 row, col = 6, 7
+
 # board = [['' for i in range(row)] for i in range(col)]
-board = [[] for i in range(col)]  # each nested list represents a column of the game board
 # tmp_board = board[:]  # clone the main_board
+
+
+def generate_board():
+    return [[] for i in range(col)]  # each nested list represents a column of the game board
+
+
+board = generate_board().copy()
 
 
 def first_player():
@@ -152,59 +158,38 @@ def check_vertical():
     return False
 
 
-def left_2_right():
-    this_index = next_index = next_index = list_index = counter = 0
-    for list_item in board:
-        if len(list_item) > 0:  # list is not empty
-            try:
-                if list_item.count(color) >= 0:  # exists at least one matched element
-                    this_index = list_item.index(color)  # get the right position
-                    try:
-                        if list_item[next_index] == color:
-                            this_index = next_index
-                            counter += 1
-                            if counter == 4:
-                                return True
-                        else:
-                            counter = 0
-                    except IndexError:
-                        counter = 0
-                        continue
-                    next_index = this_index + 1
-            except ValueError:
-                counter = 0
-                continue
-    return False
-
-
-def positive_slope(column, cell):
-    current_column = board.index(column)
+# case - positive_slope or negative_slope
+def analyse_slope(case, tmp_board, column, cell):
+    current_column = tmp_board.index(column)
     current_cell = column.index(cell)
     try:
-        if board[column][cell] == board[current_column + 1][current_cell + 1] \
-                == board[current_column + 2][current_cell + 2] \
-                == board[current_column + 3][current_cell + 3]:
-            return True
-    except:
+        if case == 'positive_slope':
+            if tmp_board[current_column][current_cell] == tmp_board[current_column + 1][current_cell + 1] \
+                    == tmp_board[current_column + 2][current_cell + 2] \
+                    == tmp_board[current_column + 3][current_cell + 3]:
+                return True
+        else:  # negative_slope
+            if tmp_board[current_column][current_cell] == tmp_board[current_column + 1][current_cell - 1] \
+                    == tmp_board[current_column + 2][current_cell - 2] \
+                    == tmp_board[current_column + 3][current_cell - 3]:
+                return True
+    except IndexError:
         return False
     return False
 
 
-def negative_slope(column, cell):
-    current_column = board.index(column)
-    current_cell = column.index(cell)
-    try:
-        if board[column][cell] == board[current_column + 1][current_cell - 1] \
-                == board[current_column + 2][current_cell - 2] \
-                == board[current_column + 3][current_cell - 3]:
-            return True
-    except:
-        return False
-    return False
+# tmp_board = board.copy() or tmp_board = board[::] are not working for me
+# so, I'm implementing my own, ... that's working very well
+def clone_board():
+    tmp = []
+    for i in board:
+        tmp.append(i.copy())
+    return tmp
 
 
+# to check all possible combination on diagonal, you need analyse only a half (21 cells) of the board (2 cells)
 def check_diagonal():
-    tmp_board = board
+    tmp_board = clone_board()
     status = False
     for column in tmp_board:
         if len(column) > 0:  # must have at least one element
@@ -212,16 +197,16 @@ def check_diagonal():
                 if board.index(column) < 4:  # analyze only a half of the board. 21 in 42
                     for cell in column:
                         if column.index(cell) < 3:  # 1st half of the column
-                            status = positive_slope(column, cell)  #
-                            tmp_board[tmp_board.index(column)][column.index(cell)] = ''
-                            status = True
+                            status = analyse_slope('positive_slope', tmp_board, column, cell)  #
                         elif column.index(cell) > 2:  # 2nd half of the column
-                            status = negative_slope(column, cell)
-    return status
+                            status = analyse_slope('negative_slope', tmp_board, column, cell)
+                        if status:
+                            return True
+                        tmp_board[tmp_board.index(column)][column.index(cell)] = ''
+    return False
 
 
 def check_winner():
-    progressive_index = 0
 
     # check for vertical victory
     if check_vertical():  # difficulty level: very easy
@@ -255,14 +240,6 @@ def set_move():
         except ValueError:
             print('\n-- ' + colored('WARNING.:', 'blue', attrs=['bold']) + ' Please enter a number between [1, 7]')
     return col_num
-
-
-def invert_board_columns():
-    column_index = move - 1
-    column = board[column_index].copy()
-    tmp_board.insert(column_index, column[::-1])  # updating -> append the reversed version of a board column
-    tmp_board.pop(move)  # { move = column_index + 1 } remove the old version
-    return tmp_board
 
 
 player = start_play
