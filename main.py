@@ -2,13 +2,10 @@ from termcolor import colored
 import random
 
 # Variables definition
-red, black = colored('X', 'red', attrs=['bold']), colored('O', attrs=['bold'])  # u'\u2B24'
-balls = [colored(u'\u2B24', 'red'), colored(u'\u2B24')]
-player_1, player_2 = 'red', 'black'
+red, blue = colored('X', 'red', attrs=['bold']), colored('O', 'blue', attrs=['bold'])  # u'\u2B24'
+balls = [colored(u'\u2B24', 'red'), colored(u'\u2B24', 'blue')]
+player_1, player_2 = 'red', 'blue'
 row, col = 6, 7
-
-# board = [['' for i in range(row)] for i in range(col)]
-# tmp_board = board[:]  # clone the main_board
 
 
 def generate_board():
@@ -31,7 +28,7 @@ for item in range(col):
         if option == 1:
             board[item][cell] = 'red'
         else:
-            board[item][cell] = 'black'
+            board[item][cell] = 'blue'
 
 
 def print_color():
@@ -40,7 +37,7 @@ def print_color():
             if cell == 'red':
                 print(red + ' ', end='')
             else:
-                print(black + ' ', end='')
+                print(blue + ' ', end='')
         print()
 
 
@@ -66,7 +63,7 @@ def print_line():
     print('+')
 
 
-def draw_board(fill_empty):
+def draw_board():
     print_header()
     for i in range(row):
         print_line()
@@ -79,19 +76,19 @@ def draw_board(fill_empty):
 # Math is beautiful
 def print_row(cell_position):
     max_index, max_len = 5, 6
-    for item in board:
+    for column in board:
         print('|' + ' ', end='')
-        current_len = len(item)
+        current_len = len(column)
         current_index = current_len - 1
         total_empty_cells = max_index - current_index
         if cell_position >= total_empty_cells:
             print_index = - 1 * (cell_position + 1)  # this is like reversing the order
             real_index = max_len + print_index  # the right index is targeted in reverse order
-            color_ball = item[real_index]
+            color_ball = column[real_index]
             if color_ball == 'red':
                 print(red + ' ', end='')  # print the red ball
             else:
-                print(black + ' ', end='')
+                print(blue + ' ', end='')
         else:
             print('  ', end='')
     print('|')
@@ -116,7 +113,7 @@ while p < 3:
     p += 1
 
 print()
-draw_board(False)
+draw_board()
 
 tmp_player = first_player() - 1
 
@@ -138,23 +135,39 @@ def save_move():
     return False
 
 
-# check for horizontal victory as the boar is printed on the screen
+# check for horizontal victory
 def check_horizontal():
-    # cell_index, counter = 0, 0
-    # for list_item in board:
-    #     if len(list_item) > 0:
-    #         if list_item[cell_index] == color:
-    #             counter += 1
-    #             if counter == 4:
-    #                 return True
+    for column in board:
+        for cell in column:
+            current_column = board.index(column)
+            current_cell = column.index(cell)
+            try:
+                if column[current_cell] == board[current_column + 1][current_cell] \
+                        == board[current_column + 2][current_cell] \
+                        == board[current_column + 3][current_cell]:
+                    address = [column[current_cell], board[current_column + 1][current_cell],
+                               board[current_column + 2][current_cell], board[current_column + 3][current_cell]]
+                    draw_winner_board(address, 'horizontal')
+                    return True
+            except IndexError:
+                continue
     return False
 
 
-# check for vertical victory as the boar is printed on the screen
+# check for vertical victory
 def check_vertical():
-    # for list_item in board:
-    #     if list_item.count(color) == 4:
-    #         return True
+    for column in board:
+        for cell in column:
+            current_cell = column.index(cell)
+            try:
+                if column[current_cell] == column[current_cell + 1] == column[current_cell + 2] \
+                        == column[current_cell + 3]:
+                    address = [column[current_cell], column[current_cell + 1], column[current_cell + 2],
+                               column[current_cell + 3]]
+                    draw_winner_board(address, 'vertical')
+                    return True
+            except IndexError:
+                continue
     return False
 
 
@@ -162,19 +175,38 @@ def check_vertical():
 def analyse_slope(case, tmp_board, column, cell):
     current_column = tmp_board.index(column)
     current_cell = column.index(cell)
+    status = False
     try:
         if case == 'positive_slope':
             if tmp_board[current_column][current_cell] == tmp_board[current_column + 1][current_cell + 1] \
                     == tmp_board[current_column + 2][current_cell + 2] \
                     == tmp_board[current_column + 3][current_cell + 3]:
-                return True
+                address = [tmp_board[current_column][current_cell], tmp_board[current_column + 1][current_cell + 1],
+                           tmp_board[current_column + 2][current_cell + 2],
+                           tmp_board[current_column + 3][current_cell + 3]]
+                status = True
         else:  # negative_slope
             if tmp_board[current_column][current_cell] == tmp_board[current_column + 1][current_cell - 1] \
                     == tmp_board[current_column + 2][current_cell - 2] \
                     == tmp_board[current_column + 3][current_cell - 3]:
-                return True
+                address = [tmp_board[current_column][current_cell], tmp_board[current_column + 1][current_cell - 1],
+                           tmp_board[current_column + 2][current_cell - 2],
+                           tmp_board[current_column + 3][current_cell - 3]]
+                status = True
+        if status:
+            draw_winner_board(address, 'slope')
+            return status
     except IndexError:
         return False
+    return False
+
+
+# print the winner move with different color on the screen
+# case - can be slope (for positive or negative), vertical or horizontal
+def draw_winner_board(cells, case):
+    # To-do
+    # ... implemented on the next version
+
     return False
 
 
@@ -227,23 +259,18 @@ def set_move():
     col_num = 0
     while col_num < 1 or col_num > 7:
         try:
-            if color == 'red':
+            col_num = int(input(colored(player.upper(), color, attrs=['bold']) + '\'s move.: '))
+            while col_num < 1 or col_num > 7:
+                print('\n-- ' + colored('WARNING.:', 'magenta', attrs=['bold']) +
+                      ' Please enter a number between [1, 7]')
                 col_num = int(input(colored(player.upper(), color, attrs=['bold']) + '\'s move.: '))
-                while col_num < 1 or col_num > 7:
-                    print('\n-- ' + colored('WARNING.:', 'blue', attrs=['bold']) + ' Please enter a number between [1, 7]')
-                    col_num = int(input(colored(player.upper(), color, attrs=['bold']) + '\'s move.: '))
-            else:
-                col_num = int(input(colored(player.upper(), attrs=['bold']) + '\'s move.: '))
-                while col_num < 1 or col_num > 7:
-                    print('\n-- ' + colored('WARNING.:', 'blue', attrs=['bold']) + ' Please enter a number between [1, 7]')
-                    col_num = int(input(colored(player.upper(), attrs=['bold']) + '\'s move.: '))
         except ValueError:
-            print('\n-- ' + colored('WARNING.:', 'blue', attrs=['bold']) + ' Please enter a number between [1, 7]')
+            print('\n-- ' + colored('WARNING.:', 'magenta', attrs=['bold']) + ' Please enter a number between [1, 7]')
     return col_num
 
 
 player = start_play
-colors = ['red', 'black']
+colors = ['red', 'blue']
 total_move = 0
 while True:
     color = colors[tmp_player]
@@ -260,13 +287,13 @@ while True:
 
     # printing the current board on the screen
     print()
-    draw_board(True)
+    draw_board()
     print()
 
     if total_move > 6:
         if check_winner():  # check if we have a WINNER
-            print(colored('--- BOARD RESULT.: ', attrs=['bold']) +
-                  colored(player.upper() + ' WIN the GAME ', attrs=['bold']))
+            print(colored('--- BOARD RESULT.: ', 'green', attrs=['bold']) +
+                  colored(player.upper() + ' WON the GAME ', color, attrs=['bold']))
             break
         else:  # check for a TIE
             count_full = 0
@@ -274,7 +301,7 @@ while True:
                 if len(item) == 6:
                     count_full += 1
             if count_full == col:  # col is equals to the total of board inner list
-                print(colored('--- BOARD RESULT.: ', attrs=['bold']) +
+                print(colored('--- BOARD RESULT.: ', 'green', attrs=['bold']) +
                       colored('TIE', attrs=['bold']))
                 break
 
