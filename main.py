@@ -1,3 +1,13 @@
+'''
+Python is Easy by: Pirple
+Project #1: Connect 4
+Python version: 3.7
+@author: Jakson Pachito
+GitHub:
+Date: November 16, 2020
+Coded and Tested with: PyCharm 2020.2.3 (Community Edition)
+'''
+
 from termcolor import colored
 import random
 
@@ -20,29 +30,6 @@ def first_player():
 
 
 player = first_player()
-
-'''
-for item in range(col):
-    for cell in range(row):
-        option = first_player()
-        if option == 1:
-            board[item][cell] = 'red'
-        else:
-            board[item][cell] = 'blue'
-
-
-def print_color():
-    for column_index in board:
-        for cell in column_index:
-            if cell == 'red':
-                print(red + ' ', end='')
-            else:
-                print(blue + ' ', end='')
-        print()
-
-
-# print_color()
-'''
 
 
 def print_header():
@@ -82,20 +69,25 @@ def print_row(cell_position):
         current_index = current_len - 1
         total_empty_cells = max_index - current_index
         if cell_position >= total_empty_cells:
-            print_index = - 1 * (cell_position + 1)  # this is like reversing the order
+            print_index = - 1 * (cell_position + 1)  # this is like reversing the order (my version)
             real_index = max_len + print_index  # the right index is targeted in reverse order
             color_ball = column[real_index]
             if color_ball == 'red':
                 print(red + ' ', end='')  # print the red ball
-            else:
+            elif color_ball == 'blue':
                 print(blue + ' ', end='')
+            else:  # 'win'
+                if color == 'red':
+                    print(colored('X', 'green', attrs=['bold']) + ' ', end='')
+                elif color == 'blue':
+                    print(colored('O', 'green', attrs=['bold']) + ' ', end='')
         else:
             print('  ', end='')
     print('|')
 
 
 def print_title():
-    print('\n' + ' ' * 3 + '--- Connect 4 Game ---')
+    print('\n' + ' ' * 3 + colored('--- Connect 4 Game ---', attrs=['bold']))
 
 
 print_title()
@@ -137,18 +129,23 @@ def save_move():
 
 # check for horizontal victory
 def check_horizontal():
-    for column in board:
+    tmp_board = clone_board()
+    for column in tmp_board:
         for cell in column:
-            current_column = board.index(column)
+            current_column = tmp_board.index(column)
             current_cell = column.index(cell)
             try:
-                if column[current_cell] == board[current_column + 1][current_cell] \
-                        == board[current_column + 2][current_cell] \
-                        == board[current_column + 3][current_cell]:
-                    address = [column[current_cell], board[current_column + 1][current_cell],
-                               board[current_column + 2][current_cell], board[current_column + 3][current_cell]]
-                    draw_winner_board(address, 'horizontal')
+                if column[current_cell] == tmp_board[current_column + 1][current_cell] \
+                        == tmp_board[current_column + 2][current_cell] \
+                        == tmp_board[current_column + 3][current_cell]:
+
+                    board[current_column][current_cell] = board[current_column + 1][current_cell] \
+                        = board[current_column + 2][current_cell] = board[current_column + 3][current_cell] = 'win'
+
                     return True
+
+                column[column.index(cell)] = ''  # this line make all the difference in the horizontal detection
+
             except IndexError:
                 continue
     return False
@@ -162,10 +159,12 @@ def check_vertical():
             try:
                 if column[current_cell] == column[current_cell + 1] == column[current_cell + 2] \
                         == column[current_cell + 3]:
-                    address = [column[current_cell], column[current_cell + 1], column[current_cell + 2],
-                               column[current_cell + 3]]
-                    draw_winner_board(address, 'vertical')
+
+                    column[current_cell] = column[current_cell + 1] = column[current_cell + 2] \
+                        = column[current_cell + 3] = 'win'
+
                     return True
+
             except IndexError:
                 continue
     return False
@@ -181,20 +180,22 @@ def analyse_slope(case, tmp_board, column, cell):
             if tmp_board[current_column][current_cell] == tmp_board[current_column + 1][current_cell + 1] \
                     == tmp_board[current_column + 2][current_cell + 2] \
                     == tmp_board[current_column + 3][current_cell + 3]:
-                address = [tmp_board[current_column][current_cell], tmp_board[current_column + 1][current_cell + 1],
-                           tmp_board[current_column + 2][current_cell + 2],
-                           tmp_board[current_column + 3][current_cell + 3]]
+
+                board[current_column][current_cell] = board[current_column + 1][current_cell + 1] \
+                    = board[current_column + 2][current_cell + 2] = board[current_column + 3][current_cell + 3] = 'win'
                 status = True
+
         else:  # negative_slope
             if tmp_board[current_column][current_cell] == tmp_board[current_column + 1][current_cell - 1] \
                     == tmp_board[current_column + 2][current_cell - 2] \
                     == tmp_board[current_column + 3][current_cell - 3]:
-                address = [tmp_board[current_column][current_cell], tmp_board[current_column + 1][current_cell - 1],
-                           tmp_board[current_column + 2][current_cell - 2],
-                           tmp_board[current_column + 3][current_cell - 3]]
+
+                board[current_column][current_cell] = board[current_column + 1][current_cell - 1] \
+                    = board[current_column + 2][current_cell - 2] \
+                    = board[current_column + 3][current_cell - 3] = 'win'
                 status = True
+
         if status:
-            draw_winner_board(address, 'slope')
             return status
     except IndexError:
         return False
@@ -204,8 +205,12 @@ def analyse_slope(case, tmp_board, column, cell):
 # print the winner move with different color on the screen
 # case - can be slope (for positive or negative), vertical or horizontal
 def draw_winner_board(cells, case):
-    # To-do
-    # ... implemented on the next version
+    print_header()
+    for i in range(row):
+        print_line()
+        print_row(i)  # is the columns content (think in that in reverse mode)
+    print_line()
+    print_header()
 
     return False
 
@@ -292,8 +297,10 @@ while True:
 
     if total_move > 6:
         if check_winner():  # check if we have a WINNER
-            print(colored('--- BOARD RESULT.: ', 'green', attrs=['bold']) +
-                  colored(player.upper() + ' WON the GAME ', color, attrs=['bold']))
+            print(colored('--- RESULT.: ', 'green', attrs=['bold']) +
+                  colored(player.upper(), color, attrs=['bold']) + colored(' is the WINNER', attrs=['bold']))
+            print()
+            draw_board()
             break
         else:  # check for a TIE
             count_full = 0
@@ -301,7 +308,7 @@ while True:
                 if len(item) == 6:
                     count_full += 1
             if count_full == col:  # col is equals to the total of board inner list
-                print(colored('--- BOARD RESULT.: ', 'green', attrs=['bold']) +
+                print(colored('--- RESULT.: ', 'green', attrs=['bold']) +
                       colored('TIE', attrs=['bold']))
                 break
 
