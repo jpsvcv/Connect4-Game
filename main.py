@@ -8,6 +8,9 @@ Date: November 16, 2020
 Coded and Tested with: PyCharm 2020.2.3 (Community Edition)
 '''
 
+# To get things working you will need to install termocolor package into your project
+# https://pypi.org/project/termcolor/
+# run this command on the Terminal inside the same folder of your project -> pip install termcolor
 from termcolor import colored
 import random
 
