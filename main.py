@@ -3,7 +3,7 @@ Python is Easy by: Pirple
 Project #1: Connect 4
 Python version: 3.7
 @author: Jakson Pachito
-GitHub:
+GitHub: https://github.com/jpsvcv/Connect4-Game
 Date: November 16, 2020
 Coded and Tested with: PyCharm 2020.2.3 (Community Edition)
 '''
